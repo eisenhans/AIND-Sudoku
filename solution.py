@@ -215,11 +215,11 @@ def solve(grid):
 
 
 if __name__ == "__main__":
-#    diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
-#    display(grid2values(diag_sudoku_grid))
-#    result = solve(diag_sudoku_grid)
-#    display(result)
-#
+    diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
+    display(grid2values(diag_sudoku_grid))
+    result = solve(diag_sudoku_grid)
+    display(result)
+
 #    try:
 #        import PySudoku
 #        PySudoku.play(grid2values(diag_sudoku_grid), result, history)
@@ -228,21 +228,3 @@ if __name__ == "__main__":
 #        pass
 #    except:
 #        print('We could not visualize your board due to a pygame issue. Not a problem! It is not a requirement.')
-    
-    
-    diagonal_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
-    values = grid2values(diagonal_grid)
-    print('\n\nbefore:\n')
-    display(values)
-    #print('\npeers of A1: {}'.format(peers['A1']))
-    #
-    #eliminate(values)
-    #print('\n\nafter eliminate:\n')
-    #display(values)
-    
-    solution = solve(diagonal_grid)
-    print('\n\nafter:\n')
-    if solution:
-        display(solution)
-    else:
-        print('no solution')
