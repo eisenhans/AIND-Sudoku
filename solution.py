@@ -5,10 +5,9 @@ from utils import *
 row_units = [cross(r, cols) for r in rows]
 column_units = [cross(rows, c) for c in cols]
 square_units = [cross(rs, cs) for rs in ('ABC','DEF','GHI') for cs in ('123','456','789')]
-unitlist = row_units + column_units + square_units
-
-# TODO: Update the unit list to add the new diagonal units
-unitlist = unitlist
+diagonal_units = [['A1', 'B2', 'C3', 'D4', 'E5', 'F6', 'G7', 'H8', 'I9'],
+                  ['A9', 'B8', 'C7', 'D6', 'E5', 'F4', 'G3', 'H2', 'I1']]
+unitlist = row_units + column_units + square_units + diagonal_units
 
 units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
 peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)
@@ -41,9 +40,29 @@ def naked_twins(values):
     and because it is simpler (since the reduce_puzzle function already calls this
     strategy repeatedly).
     """
-    # TODO: Implement this function!
-    raise NotImplementedError
+    for unit in unitlist:
+        twins = find_twins(unit, values)
+#        if twins:
+#            print('naked twins found: {}\n'.format(twins))
+#            display(values)
+        for t1, t2 in twins:
+            twin_values = values[t1]
+            for box in [b for b in unit if b != t1 and b != t2]:
+                values[box] = values[box].replace(twin_values[0], '').replace(twin_values[1], '')
+        
+    return values
 
+def find_twins(unit, values):
+    twins = []
+    remaining = unit.copy()
+    while len(remaining) > 1:
+        box = remaining.pop(0)
+        if len(values[box]) == 2:
+            twins_of_box = [t for t in remaining if values[t] == values[box]]
+            if twins_of_box:
+                twins.append((box, twins_of_box[0]))
+    
+    return twins
 
 def eliminate(values):
     """Apply the eliminate strategy to a Sudoku puzzle
@@ -61,8 +80,11 @@ def eliminate(values):
     dict
         The values dictionary with the assigned values eliminated from peers
     """
-    # TODO: Copy your code from the classroom to complete this function
-    raise NotImplementedError
+    for box in (box for box in values if len(values[box]) == 1):
+        for peer in peers[box]:
+            values[peer] = values[peer].replace(values[box], '')
+                
+    return values
 
 
 def only_choice(values):
@@ -85,8 +107,13 @@ def only_choice(values):
     -----
     You should be able to complete this function by copying your code from the classroom
     """
-    # TODO: Copy your code from the classroom to complete this function
-    raise NotImplementedError
+    all_digits = '123456789'
+    
+    for unit in unitlist:
+        for d in all_digits:
+            boxes_containing_d = [box for box in unit if d in values[box]]
+            if len(boxes_containing_d) == 1:
+                values[boxes_containing_d[0]] = d
 
 
 def reduce_puzzle(values):
@@ -103,8 +130,27 @@ def reduce_puzzle(values):
         The values dictionary after continued application of the constraint strategies
         no longer produces any changes, or False if the puzzle is unsolvable 
     """
-    # TODO: Copy your code from the classroom and modify it to complete this function
-    raise NotImplementedError
+    stalled = False
+    while not stalled:
+        # Check how many boxes have a determined value
+        solved_values_before = len([box for box in values.keys() if len(values[box]) == 1])
+
+        # Your code here: Use the Eliminate Strategy
+        eliminate(values)
+
+        # Your code here: Use the Only Choice Strategy
+        only_choice(values)
+        
+        naked_twins(values)
+
+        # Check how many boxes have a determined value, to compare
+        solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
+        # If no new values were added, stop the loop.
+        stalled = solved_values_before == solved_values_after
+        # Sanity check, return False if there is a box with zero available values:
+        if len([box for box in values.keys() if len(values[box]) == 0]):
+            return False
+    return values
 
 
 def search(values):
@@ -126,8 +172,26 @@ def search(values):
     You should be able to complete this function by copying your code from the classroom
     and extending it to call the naked twins strategy.
     """
-    # TODO: Copy your code from the classroom to complete this function
-    raise NotImplementedError
+    # First, reduce the puzzle using the previous function
+    values = reduce_puzzle(values)
+    if not values:
+        # unsolvable
+        return False
+    
+    # Choose one of the unfilled squares with the fewest possibilities
+    unsolved_boxes = [box for box in values if len(values[box]) > 1]
+    if not unsolved_boxes:
+        return values
+    
+    min_len, box = min([(len(values[box]), box) for box in unsolved_boxes])
+    
+    # Now use recursion to solve each one of the resulting sudokus, and if one returns a value (not False), return that answer!
+    for v in values[box]:
+        new_values = values.copy()
+        new_values[box] = v
+        result = search(new_values)
+        if result:
+            return result
 
 
 def solve(grid):
@@ -151,16 +215,34 @@ def solve(grid):
 
 
 if __name__ == "__main__":
-    diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
-    display(grid2values(diag_sudoku_grid))
-    result = solve(diag_sudoku_grid)
-    display(result)
-
-    try:
-        import PySudoku
-        PySudoku.play(grid2values(diag_sudoku_grid), result, history)
-
-    except SystemExit:
-        pass
-    except:
-        print('We could not visualize your board due to a pygame issue. Not a problem! It is not a requirement.')
+#    diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
+#    display(grid2values(diag_sudoku_grid))
+#    result = solve(diag_sudoku_grid)
+#    display(result)
+#
+#    try:
+#        import PySudoku
+#        PySudoku.play(grid2values(diag_sudoku_grid), result, history)
+#
+#    except SystemExit:
+#        pass
+#    except:
+#        print('We could not visualize your board due to a pygame issue. Not a problem! It is not a requirement.')
+    
+    
+    diagonal_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
+    values = grid2values(diagonal_grid)
+    print('\n\nbefore:\n')
+    display(values)
+    #print('\npeers of A1: {}'.format(peers['A1']))
+    #
+    #eliminate(values)
+    #print('\n\nafter eliminate:\n')
+    #display(values)
+    
+    solution = solve(diagonal_grid)
+    print('\n\nafter:\n')
+    if solution:
+        display(solution)
+    else:
+        print('no solution')
